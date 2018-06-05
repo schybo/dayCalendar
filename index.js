@@ -11,6 +11,7 @@ const EVENT_PADDING_TOP_BOTTOM = 10;
 const EVENT_PADDING_LEFT_RIGHT = 5;
 const BASE_CALENDAR_PADDING = 10;
 const BASE_CALENDAR_WIDTH = 600;
+const BASE_CALENDAR_HEIGHT = 720;
 const FORMATTED_MINUTES = 10;
 const EMPTY_LEVEL = 'empty';
 
@@ -191,7 +192,6 @@ function updateEventConflicts(conflictGroup, events, currentOverlappingEvents) {
 // Input: A list of events
 // Output: A list of CalendarEvent objects
 function adjustEventsForOverlappingIntervals(events) {
-  let domReadyEvents = [];
   // Prepare the event data structure for sorting
   structuredEvents = createEventDataStructure(events);
   // Sorts the events O(nlogn) to find the overlapping events
@@ -211,10 +211,12 @@ function adjustEventsForOverlappingIntervals(events) {
       );
       conflictGroup.push(event.id);
       currentOverlappingEvents++;
+
       // Update event conflicts as necessary
       updateEventConflicts(conflictGroup, eventsDict, currentOverlappingEvents);
     } else {
       currentOverlappingEvents--;
+
       // The conflict group of overlapping events is completely clear
       if (currentOverlappingEvents === 0) {
         conflictGroup = [];
@@ -223,21 +225,39 @@ function adjustEventsForOverlappingIntervals(events) {
     }
   })
   
-  // Converting to an array isn't necessary
-  for (var key in eventsDict) {
-    domReadyEvents.push(eventsDict[key])
-  }
   // return events in some form
-  return domReadyEvents;
+  return eventsDict;
+}
+
+function confirmUserInput(events) {
+  events.map(function(event) {
+    if (event.start < 0 || event.start > BASE_CALENDAR_HEIGHT) {
+      throw "Error: Event start must be within bounds of the calendar (0, 720)";
+    } else if (event.end < 0 || event.end > BASE_CALENDAR_HEIGHT) {
+      throw "Error: Event end must be within bounds of the calendar (0, 720)";
+    } else if (event.end <= event.start) {
+      throw "Error: Event must be at least 1 minute long";
+    }
+  });
 }
 
 // Input: [ {start: 30, end: 150}, {start: 540, end: 600}, {start: 560, end: 620}, {start: 610, end: 670} ]
-function layOutDay (events) {
+// Lays out the calendar events on the calendar
+window.layOutDay = function layOutDay (events) {
+  // Make sure there are no input errors
+  confirmUserInput(events);
+
   const eventElement = '<div class="event"></div>';
   const eventInnerElements = '<div class="header">Sample Item</div><div class="subheader">Sample Location</div>';
   const calendar = $('#calendar');
+
+  // Clear old events
+  calendar.empty();
+
   events = adjustEventsForOverlappingIntervals(events);
-  events.map(function(event) {
+
+  for (var key in events) {
+     let event = events[key];
      let domEventElement = $(eventElement).css({
        'width': event.width,
        'height': event.height,
@@ -245,14 +265,14 @@ function layOutDay (events) {
        'left': event.left
      }).append(eventInnerElements);
      calendar.append(domEventElement);
-  })
+  }
 }
 
 // testCase do exactly equals with start + end
 let testInput =  [ {start: 30, end: 150}, {start: 540, end: 600}, {start: 560, end: 620}, {start: 610, end: 670} ];
-let testInput2 = [ {start: 30, end: 150}, {start: 540, end: 600} ]
-let testInput3 = [ {start: 30, end: 150}, {start: 540, end: 600}, {start: 560, end: 620}]
+let testInput2 = [ {start: 30, end: 150}, {start: 540, end: 600} ];
+let testInput3 = [ {start: 30, end: 150}, {start: 540, end: 600}, {start: 560, end: 620}];
 let testInput4 =  [ {start: 30, end: 150}, {start: 540, end: 600}, {start: 560, end: 620}, {start: 610, end: 720}, {start: 610, end: 720}, {start: 610, end: 690}, {start: 630, end: 650} ];
 
 initTimeSidebar();
-layOutDay(testInput4);
+window.layOutDay(testInput4);
