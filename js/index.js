@@ -13,6 +13,7 @@ const BASE_CALENDAR_PADDING = 10;
 const BASE_CALENDAR_WIDTH = 600;
 const BASE_CALENDAR_HEIGHT = 720;
 const FORMATTED_MINUTES = 10;
+const EVENT_LENGTH_BORDER = 2;
 const EMPTY_LEVEL = 'empty';
 
 // CalendarEvent class holds information used for formatting
@@ -23,11 +24,11 @@ class CalendarEvent {
     this.insetLevel = insetLevel;
     this.conflicts = 1;
   }
-  
+
   get height() {
-    return this.calcHeight() - (EVENT_PADDING_TOP_BOTTOM * 2);
+    return this.calcHeight() - (EVENT_PADDING_TOP_BOTTOM * 2) - EVENT_LENGTH_BORDER;
   }
-  
+
   get width() {
     return this.calcWidth() - EVENT_BORDER_WIDTH - (EVENT_PADDING_LEFT_RIGHT * 2);
   }
@@ -35,26 +36,26 @@ class CalendarEvent {
   get top() {
     return this.start;
   }
-  
+
   get left() {
     return this.calcLeft();
   }
-  
+
   // How to set this
   setConflicts(currentOverlappingEvents) {
     this.conflicts = Math.max(currentOverlappingEvents, this.conflicts);
   }
-  
+
   calcLeft() {
     return (this.calcWidth() * this.insetLevel) + BASE_CALENDAR_PADDING;
   }
-  
+
   calcWidth() {
     // ToDo: What if it's not divisible by the number
     // Plus make sure it's not zero
     return (BASE_CALENDAR_WIDTH / this.conflicts);
   }
-  
+
   calcHeight() {
     return this.end - this.start;
   }
@@ -79,13 +80,13 @@ function addHalfHour(date) {
 function getFormattedHourAndMinutes(date, format = US_DATE_FORMAT) {
   hours = date.getHours();
   minutes = date.getMinutes();
-  
+
   hoursStr = String(hours);
   if (format.toLowerCase() === US_DATE_FORMAT && hours > MID_DAY) {
     hoursStr = String(hours - MID_DAY);
   }
   minutesStr = (minutes < FORMATTED_MINUTES ? '0' : '') + minutes;
-  
+
   return hoursStr + ':' + minutesStr;
 }
 
@@ -101,9 +102,18 @@ function initTimeSidebar() {
   date.setHours(START_HOUR);
   date.setMinutes(START_MIN);
   while (date.getHours() < END_TIME) {
-    $('#time-sidebar').append('<div class="time-large"><span class="hour">' + getFormattedHourAndMinutes(date) + '</span><span class="period">' + getPeriod(date) + '</span</div>'); 
+    $('#time-sidebar').append(`
+      <div class="time-large">
+        <span class="hour">${getFormattedHourAndMinutes(date)}</span>
+        <span class="period">${getPeriod(date)}</span
+      </div>
+    `);
     date = addHalfHour(date);
-    $('#time-sidebar').append('<div class="time-small"><span class="half-hour">' + getFormattedHourAndMinutes(date) + '</span></div>');
+    $('#time-sidebar').append(`
+      <div class="time-small">
+        <span class="half-hour">${getFormattedHourAndMinutes(date)}</span>
+      </div>
+    `);
     date = addHalfHour(date);
   }
 }
@@ -143,7 +153,7 @@ function compareEvents(eventA, eventB) {
   valueB = eventB.value;
   typeA = eventA.type;
   typeB = eventB.type;
- 
+
   if (valueA < valueB || (valueA === valueB && typeA < typeB)) {
     return -1; //eventA is greater than eventB
   }
@@ -163,7 +173,7 @@ function findEarliestLevel(currentEvents, id) {
       return i;
     }
   }
-  
+
   // No empty spots earlier, let's add to the column/level list
   currentEvents.push(id);
   return currentEvents.length - 1;
@@ -178,7 +188,7 @@ function removeEventFromCurrentEvents(currentEvents, id) {
        return currentEvents;
     }
   }
-  
+
   return currentEvents.slice(0, -1)
 }
 
@@ -196,12 +206,12 @@ function adjustEventsForOverlappingIntervals(events) {
   structuredEvents = createEventDataStructure(events);
   // Sorts the events O(nlogn) to find the overlapping events
   structuredEvents.sort(compareEvents);
-  
+
   let currentOverlappingEvents = 0;
   let eventsDict = {};
   let conflictGroup = [];
   let currentEvents = [];
-  
+
   structuredEvents.map(function(event) {
     if (event.type === START_INTERVAL_TYPE) {
       eventsDict[event.id] = new CalendarEvent(
@@ -224,7 +234,7 @@ function adjustEventsForOverlappingIntervals(events) {
       currentEvents = removeEventFromCurrentEvents(currentEvents, event.id);
     }
   })
-  
+
   // return events in some form
   return eventsDict;
 }
@@ -248,7 +258,10 @@ window.layOutDay = function layOutDay (events) {
   confirmUserInput(events);
 
   const eventElement = '<div class="event"></div>';
-  const eventInnerElements = '<div class="header">Sample Item</div><div class="subheader">Sample Location</div>';
+  const eventInnerElements = `
+    <div class="header">Sample Item</div>
+    <div class="subheader">Sample Location</div>
+  `;
   const calendar = $('#calendar');
 
   // Clear old events
@@ -273,6 +286,7 @@ let testInput =  [ {start: 30, end: 150}, {start: 540, end: 600}, {start: 560, e
 let testInput2 = [ {start: 30, end: 150}, {start: 540, end: 600} ];
 let testInput3 = [ {start: 30, end: 150}, {start: 540, end: 600}, {start: 560, end: 620}];
 let testInput4 =  [ {start: 30, end: 150}, {start: 540, end: 600}, {start: 560, end: 620}, {start: 610, end: 720}, {start: 610, end: 720}, {start: 610, end: 690}, {start: 630, end: 650} ];
+let testInput5 =  [ {start: 30, end: 150}, {start: 160, end: 500}, {start: 540, end: 600}, {start: 560, end: 620}, {start: 610, end: 720}, {start: 610, end: 720}, {start: 610, end: 690}, {start: 630, end: 650} ];
 
 initTimeSidebar();
-window.layOutDay(testInput4);
+window.layOutDay(testInput5);
