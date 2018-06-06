@@ -11,6 +11,7 @@ Day Calendar
 
 - Use React. Make the event, hour time, and half hour time into functional React components. jQuery code elements are messy and slow.
 - Write some test cases in Mocha and Chai
+- Implement a solution for the cutoff text on small events
 - Probably use Moment.js instead of my date additions. But I didn't know if that was allowed and wanted to reduce dependencies.
 - Set up build pipeline
 - If were continually adding to our calendar I'd use an interval tree for better analysis/time/memory: https://en.wikipedia.org/wiki/Interval_tree
